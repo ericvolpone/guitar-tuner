@@ -1,0 +1,1 @@
+{"name":"Guitar Tuner","short_name":"Tuner","description":"Chromatic guitar tuner using your microphone","start_url":"/guitar-tuner/","display":"standalone","background_color":"#1a1a2e","theme_color":"#1a1a2e","lang":"en","scope":"/guitar-tuner/","orientation":"portrait","icons":[{"src":"favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
