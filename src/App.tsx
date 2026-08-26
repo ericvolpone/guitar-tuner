@@ -28,7 +28,7 @@ function CentsMeter({ cents, visible }: { cents: number; visible: boolean }) {
 }
 
 function App() {
-  const { pitch, listening, error, start, stop } = usePitchDetector();
+  const { pitch, rmsDb, listening, error, start, stop } = usePitchDetector();
 
   const inTune = pitch ? Math.abs(pitch.cents) <= 5 : false;
   const centsLabel = pitch
@@ -51,14 +51,19 @@ function App() {
       </div>
 
       <div className={`note-display ${inTune ? 'in-tune' : ''}`}>
-        <span className="detected-note" style={{ visibility: pitch ? 'visible' : 'hidden' }}>
-          {pitch ? pitch.note : 'E'}<sup>{pitch ? pitch.octave : '2'}</sup>
-        </span>
-        <span className="detected-freq" style={{ visibility: pitch ? 'visible' : 'hidden' }}>
-          {pitch ? `${pitch.frequency} Hz` : '000.0 Hz'}
-        </span>
+        <div className="note-readings" style={{ visibility: pitch ? 'visible' : 'hidden' }}>
+          <span className="detected-note">
+            {pitch ? pitch.note : 'E'}<sup>{pitch ? pitch.octave : '2'}</sup>
+          </span>
+          <span className="detected-freq">
+            {pitch ? `${pitch.frequency} Hz` : '—'}
+          </span>
+        </div>
         <span className="idle-text" style={{ visibility: pitch ? 'hidden' : 'visible' }}>
           {listening ? 'Listening…' : 'Press Start'}
+        </span>
+        <span className="detected-db" style={{ visibility: listening ? 'visible' : 'hidden' }}>
+          {rmsDb !== null ? `${rmsDb} dBFS` : '—'}
         </span>
       </div>
 

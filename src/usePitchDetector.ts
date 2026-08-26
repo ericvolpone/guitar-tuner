@@ -3,7 +3,8 @@ import { detectPitch } from './pitchDetection';
 import type { PitchResult } from './pitchDetection';
 
 const FFT_SIZE = 2048;
-const WINDOW_MS = 100;
+const WINDOW_MS = 200;   // wider window reduces bouncing between notes
+const HOLD_MS = 500;     // keep displaying the last note for this long after signal drops
 
 interface TimestampedResult {
   ts: number;
@@ -27,8 +28,8 @@ function modeInWindow(window: TimestampedResult[]): PitchResult | null {
     if (bucket.length > best.length) best = bucket;
   }
 
-  // Require the winning note to appear in at least 40% of frames to suppress noise
-  if (best.length / window.length < 0.4) return null;
+  // Require the winning note to appear in at least 45% of frames to suppress noise
+  if (best.length / window.length < 0.45) return null;
 
   const sorted = [...best].sort((a, b) => a.result.cents - b.result.cents);
   const mid = sorted[Math.floor(sorted.length / 2)].result;
@@ -39,6 +40,7 @@ function modeInWindow(window: TimestampedResult[]): PitchResult | null {
 
 export function usePitchDetector() {
   const [pitch, setPitch] = useState<PitchResult | null>(null);
+  const [rmsDb, setRmsDb] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,26 +49,50 @@ export function usePitchDetector() {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const bufferRef = useRef<Float32Array<ArrayBuffer>>(new Float32Array(FFT_SIZE));
-  // Rolling window of detected pitch frames
   const windowRef = useRef<TimestampedResult[]>([]);
+  const lastPitchRef = useRef<PitchResult | null>(null);
+  const lastDetectTimeRef = useRef<number>(0);
 
   const tick = useCallback(() => {
     if (!analyserRef.current) return;
     analyserRef.current.getFloatTimeDomainData(bufferRef.current);
+
+    // Compute live RMS level for dB display
+    const buf = bufferRef.current;
+    let sumSq = 0;
+    for (let i = 0; i < buf.length; i++) sumSq += buf[i] * buf[i];
+    const rms = Math.sqrt(sumSq / buf.length);
+    setRmsDb(rms > 1e-10 ? Math.round(20 * Math.log10(rms)) : null);
+
     const result = detectPitch(bufferRef.current, audioCtxRef.current!.sampleRate);
 
     const now = performance.now();
-    if (result) windowRef.current.push({ ts: now, result });
-    // Prune entries older than the window
+    if (result) {
+      windowRef.current.push({ ts: now, result });
+      lastDetectTimeRef.current = now;
+    }
     windowRef.current = windowRef.current.filter(e => now - e.ts <= WINDOW_MS);
 
-    setPitch(modeInWindow(windowRef.current));
+    const modeResult = modeInWindow(windowRef.current);
+    if (modeResult) {
+      lastPitchRef.current = modeResult;
+      setPitch(modeResult);
+    } else if (now - lastDetectTimeRef.current < HOLD_MS) {
+      // Hold the last detected note while the string is still ringing but signal is weak
+      setPitch(lastPitchRef.current);
+    } else {
+      setPitch(null);
+    }
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
   const start = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      // Disable mobile audio processing that attenuates low-frequency strings (E2/A2)
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        video: false,
+      });
       const ctx = new AudioContext();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = FFT_SIZE;
@@ -94,11 +120,14 @@ export function usePitchDetector() {
     audioCtxRef.current = null;
     analyserRef.current = null;
     windowRef.current = [];
+    lastPitchRef.current = null;
+    lastDetectTimeRef.current = 0;
     setPitch(null);
+    setRmsDb(null);
     setListening(false);
   }, []);
 
   useEffect(() => () => { cancelAnimationFrame(rafRef.current); }, []);
 
-  return { pitch, listening, error, start, stop };
+  return { pitch, rmsDb, listening, error, start, stop };
 }

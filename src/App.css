@@ -75,15 +75,27 @@ body {
   transition: border-color 0.2s;
 }
 
-/* visible note + freq stack vertically inside the grid cell */
-.note-display .detected-note,
-.note-display .detected-freq {
+/* note + freq stack vertically at the top of the box */
+.note-readings {
   grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: start;
+  padding-top: 1.25rem;
+  gap: 0.25rem;
 }
 
-.note-display .detected-note { align-self: end; margin-bottom: 2.6rem; }
-.note-display .detected-freq { align-self: start; margin-top: 2.6rem; }
-.note-display .idle-text      { grid-area: 1 / 1; }
+.note-display .idle-text { grid-area: 1 / 1; }
+
+.detected-db {
+  grid-area: 1 / 1;
+  align-self: end;
+  padding-bottom: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 
 .note-display.in-tune {
   border-color: var(--green);
