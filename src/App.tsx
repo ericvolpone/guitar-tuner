@@ -37,7 +37,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1 className="app-title">Guitar Tuner</h1>
+      <h1 className="app-title">Guitar Tuner by VOLPWN</h1>
 
       <div className="strings-bar">
         {GUITAR_STRINGS.map(s => (
