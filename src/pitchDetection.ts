@@ -7,14 +7,8 @@ export interface PitchResult {
   cents: number;
 }
 
-function corrAtLag(buffer: Float32Array, maxSamples: number, lag: number): number {
-  let sum = 0;
-  for (let j = 0; j < maxSamples; j++) sum += buffer[j] * buffer[j + lag];
-  return sum;
-}
-
 /** Autocorrelation-based pitch detection. Returns null if no clear pitch found. */
-export function detectPitch(buffer: Float32Array, sampleRate: number): PitchResult | null {
+export function detectPitch(buffer: Float32Array, sampleRate: number, rmsThreshold = 0.0025): PitchResult | null {
   const SIZE = buffer.length;
   const MAX_SAMPLES = Math.floor(SIZE / 2);
 
@@ -22,30 +16,41 @@ export function detectPitch(buffer: Float32Array, sampleRate: number): PitchResu
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return null; // gate at -40 dBFS; ambient noise sits around -45 to -55
+  if (rms < rmsThreshold) return null;
 
-  const selfEnergy = corrAtLag(buffer, MAX_SAMPLES, 0);
+  // Autocorrelation
+  const correlations = new Float32Array(MAX_SAMPLES);
+  for (let i = 0; i < MAX_SAMPLES; i++) {
+    let sum = 0;
+    for (let j = 0; j < MAX_SAMPLES; j++) sum += buffer[j] * buffer[j + i];
+    correlations[i] = sum;
+  }
+
+  // Normalize by self-energy so confidence is amplitude-independent (0–1)
+  const selfEnergy = correlations[0];
   if (selfEnergy === 0) return null;
+  const norm = correlations.map(v => v / selfEnergy);
 
-  // Restrict search to guitar pitch range (E2 82 Hz – high fret ~1400 Hz)
-  // This avoids computing ~1M multiplications on every frame (important on mobile)
-  const minLag = Math.floor(sampleRate / 1400);
-  const maxLag = Math.min(Math.ceil(sampleRate / 60), MAX_SAMPLES - 2);
+  // Find first dip then first peak after it
+  let d = 0;
+  while (d < MAX_SAMPLES && norm[d] > norm[d + 1]) d++;
 
   let maxCorr = -Infinity;
   let maxIndex = -1;
-  for (let i = minLag; i <= maxLag; i++) {
-    const c = corrAtLag(buffer, MAX_SAMPLES, i) / selfEnergy;
-    if (c > maxCorr) { maxCorr = c; maxIndex = i; }
+  for (let i = d; i < MAX_SAMPLES; i++) {
+    if (norm[i] > maxCorr) {
+      maxCorr = norm[i];
+      maxIndex = i;
+    }
   }
 
-  // Guitar strings score ~0.65–0.80; random/noisy sounds rarely exceed 0.67
-  if (maxIndex < 1 || maxCorr < 0.67) return null;
+  // Guitar strings score ~0.65–0.80; pure sine (hum) scores ~0.95+
+  if (maxIndex < 1 || maxCorr < 0.6) return null;
 
   // Parabolic interpolation for sub-sample accuracy
-  const x1 = corrAtLag(buffer, MAX_SAMPLES, maxIndex - 1) / selfEnergy;
-  const x2 = maxCorr;
-  const x3 = corrAtLag(buffer, MAX_SAMPLES, maxIndex + 1) / selfEnergy;
+  const x1 = norm[maxIndex - 1];
+  const x2 = norm[maxIndex];
+  const x3 = norm[maxIndex + 1] ?? x2;
   const shift = (x3 - x1) / (2 * (2 * x2 - x1 - x3));
   const period = maxIndex + shift;
 

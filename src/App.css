@@ -23,11 +23,11 @@ body {
 
 .app {
   width: min(420px, 100vw);
-  padding: 2rem 1.5rem 3rem;
+  padding: 1rem 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .app-title {
@@ -185,7 +185,6 @@ body {
 
 /* --- Start button --- */
 .start-btn {
-  margin-top: 0.5rem;
   padding: 0.9rem 3rem;
   border: none;
   border-radius: 99px;
@@ -212,4 +211,279 @@ body {
   color: var(--red);
   text-align: center;
   max-width: 280px;
+}
+
+/* --- Layout: sidebar + main --- */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 2rem 1rem;
+}
+
+/* --- Tuning sidebar --- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 1rem 0.75rem;
+  flex-shrink: 0;
+  width: 126px;
+}
+
+.sidebar-title {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--accent);
+  margin-bottom: 0.15rem;
+}
+
+.tuning-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tuning-btn:hover {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.tuning-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* --- Volume threshold slider --- */
+.threshold-control {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.threshold-label {
+  display: block;
+  text-align: center;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.threshold-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.threshold-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.threshold-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(
+    to right,
+    var(--green) var(--fill-pct, 50%),
+    var(--accent) var(--fill-pct, 50%)
+  );
+}
+
+.threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--green);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+  transition: box-shadow 0.15s;
+}
+
+.threshold-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+}
+
+.threshold-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+
+.threshold-slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--green);
+}
+
+.threshold-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+/* --- Responsive: stack sidebar above tuner on narrow screens --- */
+@media (max-width: 580px) {
+  .layout {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.75rem;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: min(420px, 100%);
+    justify-content: center;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .sidebar-title {
+    width: 100%;
+    text-align: center;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0.1rem;
+  }
+
+  .tuning-btn {
+    width: auto;
+    flex: 0 0 auto;
+  }
+}
+
+/* --- Meter row: cents bar + start button side by side --- */
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.meter-row .cents-meter {
+  flex: 1;
+  min-width: 0;
+}
+
+.meter-row .start-btn {
+  padding: 0.7rem 1.25rem;
+  flex-shrink: 0;
+}
+
+/* --- Vertical threshold panel (right column) --- */
+.threshold-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.6rem;
+  background: var(--surface);
+  border-radius: 16px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.threshold-cap {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.threshold-title-v {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--accent);
+  width: 100%;
+  text-align: center;
+}
+
+.threshold-slider-v {
+  writing-mode: vertical-lr;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 160px;
+  width: 6px;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.threshold-slider-v::-webkit-slider-runnable-track {
+  width: 6px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+
+.threshold-slider-v::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: var(--green);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+  transition: box-shadow 0.15s;
+}
+
+.threshold-slider-v::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+}
+
+.threshold-slider-v::-moz-range-track {
+  width: 6px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+
+.threshold-slider-v::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
 }
